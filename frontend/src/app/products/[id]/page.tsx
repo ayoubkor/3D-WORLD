@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { CheckCircle2, Loader2, Minus, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -27,6 +27,9 @@ const ProductDetail = () => {
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
+        } else if (res.status === 404) {
+          // Product not found - trigger Next.js 404 page
+          notFound();
         }
       } catch (error) {
         console.error("Error fetching product", error);
@@ -90,7 +93,7 @@ const ProductDetail = () => {
   }
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Produit non trouvé</div>;
+    notFound();
   }
 
   if (submitted) {

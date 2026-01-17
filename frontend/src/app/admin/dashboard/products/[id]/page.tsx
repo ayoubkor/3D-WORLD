@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, notFound } from 'next/navigation';
 import { ArrowLeft, Upload, Loader2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -56,8 +56,11 @@ export default function EditProductPage() {
                     if (data.image_url) {
                         setCurrentImageUrl(`http://localhost:5000${data.image_url}`);
                     }
+                } else if (res.status === 404) {
+                    // Product not found - trigger Next.js 404 page
+                    notFound();
                 } else {
-                    alert("Produit introuvable");
+                    alert("Erreur lors du chargement du produit");
                     router.push('/admin/dashboard/products');
                 }
             } catch (error) {
