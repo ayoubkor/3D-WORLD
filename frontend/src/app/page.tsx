@@ -1,12 +1,44 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { ArrowRight, Zap, Star, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Zap, Star, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { getApiUrl, getImageUrl } from '@/lib/config';
+
+interface Product {
+  id: number;
+  name_fr: string;
+  name_ar: string;
+  price: number;
+  image_url: string;
+  show_on_home: boolean;
+}
 
 export default function Home() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, lang } = useLanguage();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/products'));
+        if (res.ok) {
+          const data = await res.json();
+          // Filter products to only show those marked for home page
+          const featured = data.filter((p: Product) => p.show_on_home);
+          setFeaturedProducts(featured);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des produits:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="flex flex-col gap-32 pb-32">
@@ -14,27 +46,43 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4">
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-center gap-3 mb-4"
+          >
+            <img
+              src="/logo.jpg"
+              alt="Giftini Logo"
+              className="w-16 h-16 rounded-full object-cover shadow-2xl ring-2 ring-primary/30"
+            />
+            <span className="text-2xl md:text-3xl font-bold text-white/90">
+              Bienvenue chez <span className="text-primary">Giftini</span>
+            </span>
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-[0.2em] mb-8"
           >
             <Sparkles size={14} />
             <span>New Collection 2026</span>
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-6xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9]"
           >
             {t.hero.title.split(' ').map((word, i) => (
-              <span key={i} className={i === 1 ? "text-primary neon-text" : ""}>{word} </span>
+              <span key={i} className={i === 2 ? "text-primary neon-text" : ""}>{word} </span>
             ))}
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -42,7 +90,7 @@ export default function Home() {
           >
             {t.hero.subtitle}
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -68,7 +116,7 @@ export default function Home() {
             { icon: <Star size={32} />, title: "Design Unique", desc: "Des modèles exclusifs inspirés de la culture pop et anime, introuvables ailleurs.", color: "text-secondary" },
             { icon: <ShieldCheck size={32} />, title: "Livraison Sécurisée", desc: "Emballage blindé pour garantir l'arrivée intacte de vos objets de collection.", color: "text-accent" }
           ].map((feature, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               whileHover={{ y: -10 }}
               className="anime-card p-10 flex flex-col gap-6"
@@ -91,33 +139,53 @@ export default function Home() {
             <div className="h-2 w-24 bg-primary rounded-full"></div>
           </div>
           <Link href="/products" className="group flex items-center gap-3 text-primary font-black uppercase tracking-widest text-sm">
-            {t.nav.products} 
+            {t.nav.products}
             <div className="w-10 h-10 rounded-full border border-primary/30 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
               <ArrowRight size={18} className={isRTL ? "rotate-180" : ""} />
             </div>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map((id) => (
-            <div key={id} className="anime-card group">
-              <div className="aspect-square bg-zinc-900/50 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-zinc-800 font-black text-2xl italic opacity-20">
-                  ITEM #{id}
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-primary" size={40} />
+          </div>
+        ) : featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map((product) => (
+              <Link key={product.id} href={`/products/${product.id}`} className="anime-card group">
+                <div className="aspect-square bg-zinc-900/50 relative overflow-hidden">
+                  {product.image_url ? (
+                    <img
+                      src={getImageUrl(product.image_url)}
+                      alt={lang === 'fr' ? product.name_fr : product.name_ar}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-zinc-800 font-black text-2xl italic opacity-20">
+                      NO IMAGE
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                    <button className="w-full py-3 bg-white text-black font-black text-xs uppercase tracking-widest rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      {t.products.order}
+                    </button>
+                  </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                   <button className="w-full py-3 bg-white text-black font-black text-xs uppercase tracking-widest rounded-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                     Quick View
-                   </button>
+                <div className="p-6">
+                  <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">
+                    {lang === 'fr' ? product.name_fr : product.name_ar}
+                  </h3>
+                  <p className="text-2xl font-black text-white">{product.price} DT</p>
                 </div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">Produit Anime #{id}</h3>
-                <p className="text-2xl font-black text-white">25.00 €</p>
-              </div>
-            </div>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-zinc-500">
+            Aucun produit sélectionné pour l'accueil.
+          </div>
+        )}
       </section>
     </div>
   );

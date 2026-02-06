@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const cairo = Cairo({ subsets: ["arabic"], variable: "--font-cairo" });
 
 export const metadata: Metadata = {
-  title: "Print3D Shop - Impression 3D Anime & Créative",
+  title: "GiftiniShop - Boutique Cadeaux Personnalisés & Impression 3D",
   description: "Boutique en ligne de produits d'impression 3D bilingue",
 };
 
@@ -27,7 +27,7 @@ export default function RootLayout({
           </main>
           <footer className="bg-zinc-950 border-t border-zinc-900 py-8 mt-20">
             <div className="max-w-7xl mx-auto px-4 text-center text-zinc-500 text-sm">
-              © 2026 Print3D Shop. Tous droits réservés.
+              © 2026 GiftiniShop. Tous droits réservés.
             </div>
           </footer>
         </LanguageProvider>

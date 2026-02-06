@@ -11,11 +11,11 @@ const AdminLogin = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulation login
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'admin' && password === 'giftini94334339') {
       localStorage.setItem('isAdmin', 'true');
       router.push('/admin/dashboard');
     } else {
-      alert('Identifiants incorrects (admin / admin123)');
+      alert('Identifiants incorrects. Veuillez réessayer.');
     }
   };
 
@@ -33,8 +33,8 @@ const AdminLogin = () => {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">Utilisateur</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 focus:border-primary outline-none"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -42,8 +42,8 @@ const AdminLogin = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">Mot de passe</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 focus:border-primary outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

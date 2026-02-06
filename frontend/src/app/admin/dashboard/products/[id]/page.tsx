@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { ArrowLeft, Upload, Loader2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { getApiUrl, getImageUrl } from '@/lib/config';
 
 const CATEGORIES = {
     "Deco": ["vase", "luminaire", "sculpture"],
@@ -29,6 +30,7 @@ export default function EditProductPage() {
         category: '',
         subcategory: '',
         stock: '',
+        show_on_home: false,
         image: null as File | null
     });
     const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export default function EditProductPage() {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/products/${params.id}`);
+                const res = await fetch(getApiUrl(`/api/products/${params.id}`));
                 if (res.ok) {
                     const data = await res.json();
                     setFormData({
@@ -51,10 +53,11 @@ export default function EditProductPage() {
                         category: data.category || '',
                         subcategory: data.subcategory || '',
                         stock: data.stock || '',
+                        show_on_home: Boolean(data.show_on_home),
                         image: null
                     });
                     if (data.image_url) {
-                        setCurrentImageUrl(`http://localhost:5000${data.image_url}`);
+                        setCurrentImageUrl(getImageUrl(data.image_url));
                     }
                 } else if (res.status === 404) {
                     // Product not found - trigger Next.js 404 page
@@ -84,11 +87,17 @@ export default function EditProductPage() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
-        if (type === 'checkbox') {
+        if (name === 'is_promo') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({
                 ...prev,
                 is_promo: checked,
+            }));
+        } else if (name === 'show_on_home') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({
+                ...prev,
+                show_on_home: checked,
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -117,6 +126,7 @@ export default function EditProductPage() {
             data.append('category', formData.category);
             data.append('subcategory', formData.subcategory);
             data.append('is_promo', formData.is_promo ? 'true' : 'false');
+            data.append('show_on_home', formData.show_on_home ? 'true' : 'false');
             data.append('price', String(formData.price));
 
             if (formData.is_promo) {
@@ -132,20 +142,21 @@ export default function EditProductPage() {
                 data.append('image', formData.image);
             }
 
-            const response = await fetch(`http://localhost:5000/api/products/${params.id}`, {
+            const response = await fetch(getApiUrl(`/api/products/${params.id}`), {
                 method: 'PUT',
                 body: data,
             });
 
             if (!response.ok) {
-                throw new Error('Erreur lors de la modification');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Erreur lors de la modification');
             }
 
             router.push('/admin/dashboard/products');
             router.refresh();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Une erreur est survenue');
+            alert(error.message || 'Une erreur est survenue');
         } finally {
             setIsSaving(false);
         }
@@ -259,11 +270,25 @@ export default function EditProductPage() {
                             </label>
                         </div>
 
+                        <div className="flex items-center gap-3 mb-6 pt-4 border-t border-zinc-800/50">
+                            <input
+                                type="checkbox"
+                                id="edit_show_on_home"
+                                name="show_on_home"
+                                checked={formData.show_on_home}
+                                onChange={handleInputChange}
+                                className="w-5 h-5 rounded border-zinc-700 bg-zinc-800 text-primary focus:ring-primary/50"
+                            />
+                            <label htmlFor="edit_show_on_home" className="font-bold text-white select-none cursor-pointer">
+                                Afficher sur l'accueil (Produit Populaire) ?
+                            </label>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Standard/Original Price Field */}
                             <div>
                                 <label className={`block text-sm font-medium mb-2 ${formData.is_promo ? 'text-zinc-500 line-through' : 'text-zinc-400'}`}>
-                                    {formData.is_promo ? 'Ancien Prix (€)' : 'Prix (€)'}
+                                    {formData.is_promo ? 'Ancien Prix (DT)' : 'Prix (DT)'}
                                 </label>
                                 <input
                                     type="number"
@@ -285,7 +310,7 @@ export default function EditProductPage() {
                             {/* Promo Price Field (Only if Promo) */}
                             {formData.is_promo && (
                                 <div className="animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-sm font-bold text-primary mb-2">Nouveau Prix (€)</label>
+                                    <label className="block text-sm font-bold text-primary mb-2">Nouveau Prix (DT)</label>
                                     <input
                                         type="number"
                                         name="price"

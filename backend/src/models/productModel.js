@@ -12,10 +12,15 @@ class Product {
     }
 
     static async create(data) {
-        const { name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, is_promo, original_price } = data;
+        const { name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, is_promo, original_price, show_on_home } = data;
+
+        // Convert boolean strings/values to 0/1 for MySQL
+        const isPromoVal = (is_promo === 'true' || is_promo === true) ? 1 : 0;
+        const showOnHomeVal = (show_on_home === 'true' || show_on_home === true) ? 1 : 0;
+
         const [result] = await db.query(
-            'INSERT INTO products (name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, is_promo, original_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, is_promo || false, original_price || null]
+            'INSERT INTO products (name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, is_promo, original_price, show_on_home) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [name_fr, name_ar, description_fr, description_ar, price, image_url, category, subcategory, stock, isPromoVal, original_price || null, showOnHomeVal]
         );
         return result.insertId;
     }
@@ -49,6 +54,11 @@ class Product {
             // If empty string, set to NULL or 0? user logic expects >0.
             // If user clears it, we should set null.
             values.push(data.original_price === '' || data.original_price === 'null' ? null : data.original_price);
+        }
+
+        if (data.show_on_home !== undefined) {
+            fields.push('show_on_home=?');
+            values.push(data.show_on_home === 'true' || data.show_on_home === true ? 1 : 0);
         }
 
         if (fields.length === 0) return;

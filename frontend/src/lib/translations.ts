@@ -6,7 +6,7 @@ export const translations = {
       admin: "Admin",
     },
     hero: {
-      title: "Impression 3D Créative",
+      title: "Because Every Gift Tells a Story",
       subtitle: "Figurines, porte-clés et objets uniques inspirés de vos univers préférés.",
       cta: "Découvrir la boutique",
     },
@@ -27,7 +27,7 @@ export const translations = {
       success: "Commande envoyée avec succès !",
     },
     footer: {
-      rights: "© 2026 Print3D Shop. Tous droits réservés.",
+      rights: "© 2026 GiftiniShop. Tous droits réservés.",
     }
   },
   ar: {
@@ -58,7 +58,7 @@ export const translations = {
       success: "تم إرسال الطلب بنجاح!",
     },
     footer: {
-      rights: "© 2026 متجر Print3D. جميع الحقوق محفوظة.",
+      rights: "© 2026 GiftiniShop. جميع الحقوق محفوظة.",
     }
   }
 };

@@ -4,6 +4,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import Link from 'next/link';
 import { ShoppingCart, Search, Filter, ArrowRight, Loader2, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getApiUrl, getImageUrl } from '@/lib/config';
 
 const CATEGORIES = {
   "All": [],
@@ -27,7 +28,7 @@ const ProductsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(getApiUrl('/api/products'));
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
@@ -157,7 +158,7 @@ const ProductsPage = () => {
                   <div className="aspect-square bg-zinc-950 relative overflow-hidden rounded-t-xl">
                     {product.image_url ? (
                       <img
-                        src={`http://localhost:5000${product.image_url}`}
+                        src={getImageUrl(product.image_url)}
                         alt={product.name_fr}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -193,14 +194,14 @@ const ProductsPage = () => {
                       <div className="flex flex-col">
                         {product.is_promo && Number(product.original_price) > 0 && (
                           <span className="text-sm text-zinc-500 line-through font-medium">
-                            {product.original_price} €
+                            {product.original_price} DT
                           </span>
                         )}
                         <div className="flex items-baseline gap-1">
                           <span className={`text-2xl font-black ${product.is_promo ? 'text-red-500' : 'text-white'}`}>
                             {product.price}
                           </span>
-                          <span className={`font-bold text-sm ${product.is_promo ? 'text-red-500/80' : 'text-zinc-400'}`}>€</span>
+                          <span className={`font-bold text-sm ${product.is_promo ? 'text-red-500/80' : 'text-zinc-400'}`}>DT</span>
                         </div>
                       </div>
 

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Edit2, Trash2, Search, Package, ArrowLeft } from 'lucide-react';
+import { getApiUrl, getImageUrl } from '@/lib/config';
 
 interface Product {
     id: number;
@@ -20,7 +21,7 @@ export default function ProductsPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/products');
+            const res = await fetch(getApiUrl('/api/products'));
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);
@@ -36,7 +37,7 @@ export default function ProductsPage() {
         if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
 
         try {
-            await fetch(`http://localhost:5000/api/products/${id}`, {
+            await fetch(getApiUrl(`/api/products/${id}`), {
                 method: 'DELETE',
             });
             fetchProducts(); // Refresh list
@@ -122,7 +123,7 @@ export default function ProductsPage() {
                                         <td className="px-6 py-4">
                                             <div className="w-12 h-12 rounded-lg bg-zinc-800 overflow-hidden">
                                                 {product.image_url ? (
-                                                    <img src={`http://localhost:5000${product.image_url}`} alt={product.name_fr} className="w-full h-full object-cover" />
+                                                    <img src={getImageUrl(product.image_url)} alt={product.name_fr} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-zinc-600">
                                                         <Package size={20} />
@@ -139,7 +140,7 @@ export default function ProductsPage() {
                                         <td className="px-6 py-4 text-zinc-400 text-sm">
                                             {product.subcategory || '-'}
                                         </td>
-                                        <td className="px-6 py-4 font-bold">{product.price} €</td>
+                                        <td className="px-6 py-4 font-bold">{product.price} DT</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.stock > 10 ? 'bg-green-500/10 text-green-500' :
                                                 product.stock > 0 ? 'bg-orange-500/10 text-orange-500' :

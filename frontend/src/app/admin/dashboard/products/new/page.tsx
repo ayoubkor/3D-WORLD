@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { getApiUrl } from '@/lib/config';
 
 const CATEGORIES = {
     "Deco": ["vase", "luminaire", "sculpture"],
@@ -27,6 +28,7 @@ export default function NewProductPage() {
         category: '',
         subcategory: '',
         stock: '',
+        show_on_home: false,
         image: null as File | null
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -42,12 +44,17 @@ export default function NewProductPage() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
-        if (type === 'checkbox') {
+        if (name === 'is_promo') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({
                 ...prev,
                 is_promo: checked,
-                // If unchecked, reset original price? Or keep it? Let's keep it but logic handles it.
+            }));
+        } else if (name === 'show_on_home') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({
+                ...prev,
+                show_on_home: checked,
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -105,6 +112,7 @@ export default function NewProductPage() {
             // Actually, let's keep it simple in the UI state too.
 
             data.append('is_promo', formData.is_promo ? 'true' : 'false');
+            data.append('show_on_home', formData.show_on_home ? 'true' : 'false');
             data.append('price', formData.price); // The selling price
             if (formData.is_promo) {
                 data.append('original_price', formData.original_price);
@@ -114,7 +122,7 @@ export default function NewProductPage() {
                 data.append('image', formData.image);
             }
 
-            const response = await fetch('http://localhost:5000/api/products', {
+            const response = await fetch(getApiUrl('/api/products'), {
                 method: 'POST',
                 body: data,
             });
@@ -234,11 +242,25 @@ export default function NewProductPage() {
                             </label>
                         </div>
 
+                        <div className="flex items-center gap-3 mb-6 pt-4 border-t border-zinc-800/50">
+                            <input
+                                type="checkbox"
+                                id="show_on_home"
+                                name="show_on_home"
+                                checked={formData.show_on_home}
+                                onChange={handleInputChange}
+                                className="w-5 h-5 rounded border-zinc-700 bg-zinc-800 text-primary focus:ring-primary/50"
+                            />
+                            <label htmlFor="show_on_home" className="font-bold text-white select-none cursor-pointer">
+                                Afficher sur l'accueil (Produit Populaire) ?
+                            </label>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Standard/Original Price Field */}
                             <div>
                                 <label className={`block text-sm font-medium mb-2 ${formData.is_promo ? 'text-zinc-500 line-through' : 'text-zinc-400'}`}>
-                                    {formData.is_promo ? 'Ancien Prix (€)' : 'Prix (€)'}
+                                    {formData.is_promo ? 'Ancien Prix (DT)' : 'Prix (DT)'}
                                 </label>
                                 <input
                                     type="number"
@@ -260,7 +282,7 @@ export default function NewProductPage() {
                             {/* Promo Price Field (Only if Promo) */}
                             {formData.is_promo && (
                                 <div className="animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-sm font-bold text-primary mb-2">Nouveau Prix (€)</label>
+                                    <label className="block text-sm font-bold text-primary mb-2">Nouveau Prix (DT)</label>
                                     <input
                                         type="number"
                                         name="price" // This sets the ACTUAL selling price

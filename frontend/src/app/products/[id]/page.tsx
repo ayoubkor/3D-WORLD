@@ -4,6 +4,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useParams, notFound } from 'next/navigation';
 import { CheckCircle2, Loader2, Minus, Plus } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { getApiUrl, getImageUrl } from '@/lib/config';
 
 const ProductDetail = () => {
   const { t, lang } = useLanguage();
@@ -23,7 +24,7 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${params.id}`);
+        const res = await fetch(getApiUrl(`/api/products/${params.id}`));
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
@@ -62,7 +63,7 @@ const ProductDetail = () => {
         ]
       };
 
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch(getApiUrl('/api/orders'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -117,7 +118,7 @@ const ProductDetail = () => {
         <div className="aspect-square bg-zinc-900 rounded-2xl border border-zinc-800 flex items-center justify-center overflow-hidden relative group">
           {product.image_url ? (
             <img
-              src={`http://localhost:5000${product.image_url}`}
+              src={getImageUrl(product.image_url)}
               alt={product.name_fr}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -138,10 +139,10 @@ const ProductDetail = () => {
 
           <div className="flex items-baseline gap-3 mb-6">
             {product.is_promo && Number(product.original_price) > 0 && (
-              <span className="text-xl text-zinc-500 line-through font-medium">{product.original_price} €</span>
+              <span className="text-xl text-zinc-500 line-through font-medium">{product.original_price} DT</span>
             )}
             <p className={`text-3xl font-black ${product.is_promo ? 'text-red-500' : 'text-primary'}`}>
-              {product.price} €
+              {product.price} DT
             </p>
           </div>
 
@@ -226,7 +227,7 @@ const ProductDetail = () => {
 
           <div className="pt-4 border-t border-zinc-800 flex justify-between items-center text-lg font-bold">
             <span>Total à payer</span>
-            <span className="text-2xl text-primary">{(product.price * quantity).toFixed(2)} €</span>
+            <span className="text-2xl text-primary">{(product.price * quantity).toFixed(2)} DT</span>
           </div>
 
           <button

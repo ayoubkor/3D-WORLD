@@ -5,6 +5,7 @@ import {
     ArrowLeft, Loader2, Package, CheckCircle2,
     Inbox, Settings, Truck, Archive, AlertCircle
 } from 'lucide-react';
+import { getApiUrl } from '@/lib/config';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- CONFIGURATION ---
@@ -63,7 +64,7 @@ export default function FullDashboardPage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/orders');
+            const res = await fetch(getApiUrl('/api/orders'));
             if (res.ok) {
                 const data = await res.json();
                 setOrders(data);
@@ -221,7 +222,7 @@ export default function FullDashboardPage() {
                                                             <span>{order.items ? order.items.length : 0} Élém.</span>
                                                         </div>
                                                         <span className={`font-mono font-bold text-sm ${status === 'livree' ? 'text-green-500' : 'text-zinc-300'}`}>
-                                                            {order.total_price} €
+                                                            {order.total_price} DT
                                                         </span>
                                                     </div>
                                                 </div>

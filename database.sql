@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(100),
     subcategory VARCHAR(100),
     stock INT DEFAULT 0,
+    is_promo BOOLEAN DEFAULT 0,
+    original_price DECIMAL(10, 2),
+    show_on_home BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -49,6 +52,6 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (product_id) REFERENCES products(id)
 ) ENGINE=InnoDB;
 
--- Insertion d'un admin par défaut (mot de passe à hasher en prod: 'admin123')
+-- Insertion d'un admin par défaut (mot de passe: 'giftini94334339')
 -- Note: Le hash ci-dessous est un exemple, il devra être généré proprement.
 INSERT INTO users (username, password) VALUES ('admin', '$2b$10$YourHashedPasswordHere');

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, ShoppingCart, TrendingUp, Users, Loader2, Edit, X, Check, Eye } from 'lucide-react';
+import { getApiUrl } from '@/lib/config';
 
 // Status Configuration
 const STATUS_FLOW = [
@@ -47,13 +48,16 @@ const Dashboard = () => {
   const [passwordPrompt, setPasswordPrompt] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
 
+  // Product Filter State
+  const [selectedProduct, setSelectedProduct] = useState<string>('all');
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/orders');
+      const res = await fetch(getApiUrl('/api/orders'));
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -83,8 +87,8 @@ const Dashboard = () => {
   const initiateStatusUpdate = async () => {
     if (!selectedOrder) return;
 
-    // Security check for 'livree' status
-    if (newStatus === 'livree') {
+    // Security check for 'livree' status - require password when changing TO or FROM 'livree'
+    if (newStatus === 'livree' || selectedOrder.status === 'livree') {
       setPasswordPrompt(true);
     } else {
       confirmUpdateStatus();
@@ -92,7 +96,7 @@ const Dashboard = () => {
   };
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === '3d world') {
+    if (passwordInput === 'giftini1234') {
       setPasswordPrompt(false);
       setPasswordInput('');
       confirmUpdateStatus();
@@ -104,7 +108,7 @@ const Dashboard = () => {
   const confirmUpdateStatus = async () => {
     setUpdating(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${selectedOrder.id}/status`, {
+      const res = await fetch(getApiUrl(`/api/orders/${selectedOrder.id}/status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -131,6 +135,35 @@ const Dashboard = () => {
     setNewStatus(order.status);
     setPasswordPrompt(false);
     setPasswordInput('');
+  };
+
+  // Extract unique products from all orders
+  const uniqueProducts = React.useMemo(() => {
+    const productsSet = new Set<string>();
+    orders.forEach(order => {
+      if (order.items && order.items.length > 0) {
+        order.items.forEach((item: any) => {
+          if (item.name_fr) productsSet.add(item.name_fr);
+        });
+      }
+    });
+    return Array.from(productsSet).sort();
+  }, [orders]);
+
+  // Filter orders based on selected product
+  const filteredOrders = React.useMemo(() => {
+    if (selectedProduct === 'all') return orders;
+    return orders.filter(order => {
+      if (!order.items || order.items.length === 0) return false;
+      return order.items.some((item: any) => item.name_fr === selectedProduct);
+    });
+  }, [orders, selectedProduct]);
+
+  // Helper function to display products in order
+  const getProductsDisplay = (order: any) => {
+    if (!order.items || order.items.length === 0) return 'N/A';
+    if (order.items.length === 1) return order.items[0].name_fr;
+    return order.items.map((item: any) => item.name_fr).join(', ');
   };
 
   return (
@@ -162,7 +195,7 @@ const Dashboard = () => {
         <div className="anime-card p-6">
           <div className="mb-4 text-green-500"><TrendingUp /></div>
           <p className="text-zinc-500 text-sm mb-1">Revenus (Livrées)</p>
-          <p className="text-3xl font-black">{stats.revenue.toFixed(2)} €</p>
+          <p className="text-3xl font-black">{stats.revenue.toFixed(2)} DT</p>
         </div>
         <div className="anime-card p-6">
           <div className="mb-4 text-accent"><Users /></div>
@@ -174,7 +207,29 @@ const Dashboard = () => {
       {/* Recent Orders Table */}
       <div className="anime-card overflow-hidden">
         <div className="p-6 border-b border-zinc-800">
-          <h2 className="font-bold text-xl">Commandes Récentes</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="font-bold text-xl">Commandes Récentes</h2>
+
+            {/* Product Filter */}
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-zinc-400">Filtrer par produit:</label>
+              <select
+                value={selectedProduct}
+                onChange={(e) => setSelectedProduct(e.target.value)}
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 outline-none focus:border-primary capitalize text-sm min-w-[200px] transition-all"
+              >
+                <option value="all">Tous les produits</option>
+                {uniqueProducts.map(product => (
+                  <option key={product} value={product}>{product}</option>
+                ))}
+              </select>
+              {selectedProduct !== 'all' && (
+                <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold border border-primary/30">
+                  {filteredOrders.length} trouvée{filteredOrders.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left bg-zinc-900/20">
@@ -183,6 +238,7 @@ const Dashboard = () => {
                 <th className="px-6 py-4">Client</th>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Heure</th>
+                <th className="px-6 py-4">Produit(s)</th>
                 <th className="px-6 py-4">Total</th>
                 <th className="px-6 py-4">Statut</th>
                 <th className="px-6 py-4">Action</th>
@@ -191,17 +247,19 @@ const Dashboard = () => {
             <tbody className="divide-y divide-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
                     <div className="flex justify-center mb-2"><Loader2 className="animate-spin" /></div>
                     Chargement...
                   </td>
                 </tr>
-              ) : orders.length === 0 ? (
+              ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">Aucune commande pour le moment.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500">
+                    {selectedProduct === 'all' ? 'Aucune commande pour le moment.' : `Aucune commande contenant "${selectedProduct}".`}
+                  </td>
                 </tr>
               ) : (
-                orders.map((order) => {
+                filteredOrders.map((order) => {
                   const dateObj = new Date(order.created_at);
                   return (
                     <tr key={order.id} className="hover:bg-zinc-900/30 transition-colors">
@@ -215,7 +273,15 @@ const Dashboard = () => {
                       <td className="px-6 py-4 text-zinc-400 font-mono text-xs">
                         {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="px-6 py-4 font-bold">{order.total_price} €</td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-zinc-300 max-w-xs truncate" title={getProductsDisplay(order)}>
+                          {getProductsDisplay(order)}
+                        </div>
+                        {order.items && order.items.length > 1 && (
+                          <span className="text-[10px] text-zinc-500 font-mono">({order.items.length} produits)</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 font-bold">{order.total_price} DT</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${(STATUS_COLORS as any)[order.status] || 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                           {order.status}
@@ -322,8 +388,8 @@ const Dashboard = () => {
                   onClick={initiateStatusUpdate}
                   disabled={updating || (newStatus === selectedOrder.status)}
                   className={`w-full py-3 rounded-lg font-bold flex items-center justify-center transition-all ${newStatus === selectedOrder.status
-                      ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                      : 'btn-primary'
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    : 'btn-primary'
                     }`}
                 >
                   {updating ? <Loader2 className="animate-spin mr-2" /> : <Check size={18} className="mr-2" />}
@@ -351,8 +417,8 @@ const Dashboard = () => {
                         <tr key={idx}>
                           <td className="px-4 py-3 font-medium">{item.name_fr}</td>
                           <td className="px-4 py-3 text-right text-zinc-400">x{item.quantity}</td>
-                          <td className="px-4 py-3 text-right">{item.price_at_purchase} €</td>
-                          <td className="px-4 py-3 text-right font-bold">{(item.price_at_purchase * item.quantity).toFixed(2)} €</td>
+                          <td className="px-4 py-3 text-right">{item.price_at_purchase} DT</td>
+                          <td className="px-4 py-3 text-right font-bold">{(item.price_at_purchase * item.quantity).toFixed(2)} DT</td>
                         </tr>
                       ))
                     ) : (
@@ -364,7 +430,7 @@ const Dashboard = () => {
                   <tfoot className="bg-zinc-900/50">
                     <tr>
                       <td colSpan={3} className="px-4 py-3 text-right font-bold text-zinc-400 uppercase">Total Commande</td>
-                      <td className="px-4 py-3 text-right font-black text-lg text-primary">{selectedOrder.total_price} €</td>
+                      <td className="px-4 py-3 text-right font-black text-lg text-primary">{selectedOrder.total_price} DT</td>
                     </tr>
                   </tfoot>
                 </table>
