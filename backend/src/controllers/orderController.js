@@ -1,4 +1,5 @@
 const Order = require('../models/orderModel');
+const { sendOrderNotification } = require('../services/emailService');
 
 exports.getOrders = async (req, res) => {
     try {
@@ -26,6 +27,16 @@ exports.createOrder = async (req, res) => {
             { customer_name, customer_phone, customer_address, customer_message, total_price },
             items
         );
+
+        // Send email notification (non-blocking)
+        sendOrderNotification(
+            orderId,
+            { customer_name, customer_phone, customer_address, customer_message, total_price },
+            items
+        )
+            .then(() => console.log(`✅ Email de notification envoyé pour la commande #${orderId}`))
+            .catch(err => console.error(`❌ Erreur email commande #${orderId}:`, err.message));
+
         res.status(201).json({ id: orderId, message: 'Commande créée avec succès' });
     } catch (error) {
         res.status(500).json({ message: error.message });
